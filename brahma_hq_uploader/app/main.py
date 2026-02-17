@@ -19,12 +19,21 @@ security = HTTPBearer()
 # ---------- UI ----------
 UI_PATH = Path(__file__).resolve().parent.parent / "ui" / "index.html"
 
-@app.get("/", response_class=HTMLResponse, include_in_schema=False)
-def ui_home():
-    # serves UI
+def serve_ui():
     if not UI_PATH.exists():
-        return HTMLResponse("<h3>UI not found. Ensure ui/index.html is packaged into container.</h3>", status_code=500)
-    return UI_PATH.read_text(encoding="utf-8")
+        return HTMLResponse(
+            "<h3>UI not found. Ensure ui/index.html is packaged into container.</h3>",
+            status_code=500
+        )
+    return HTMLResponse(UI_PATH.read_text(encoding="utf-8"))
+
+@app.get("/", include_in_schema=False)
+def root_ui():
+    return serve_ui()
+
+@app.get("/ui", include_in_schema=False)
+def ui_page():
+    return serve_ui()
 
 
 @app.get("/health")
