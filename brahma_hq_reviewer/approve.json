@@ -1,0 +1,10 @@
+﻿{
+  "candidate_path": "02_Candidates/_provenance/candidate_2cbe0d6f74ec7c62.json",
+  "decision": "approved",
+  "reviewer": "Madhavi",
+  "comments": "Approved for masterdata",
+  "patch": {
+    "pmax_w": 580,
+    "efficiency_pct": 22.5
+  }
+}

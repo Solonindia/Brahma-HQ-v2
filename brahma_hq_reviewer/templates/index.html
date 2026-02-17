@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Brahma HQ Reviewer</title>
+  <style>
+    body { font-family: Segoe UI, Arial; margin: 24px; }
+    input { padding: 6px; width: 520px; }
+    button { padding: 6px 12px; }
+    .item { margin: 8px 0; }
+    code { background: #f4f4f4; padding: 2px 6px; }
+  </style>
+</head>
+<body>
+  <h2>Brahma HQ Reviewer (Phase E)</h2>
+
+  <form method="get" action="/ui">
+    <label>Prefix (GCS path):</label><br/>
+    <input name="prefix" value="{{ prefix }}" />
+    <button type="submit">Load</button>
+  </form>
+
+  <p>Found: <b>{{ count }}</b></p>
+
+  {% for p in items %}
+    <div class="item">
+      <a href="/ui/candidate?path={{ p|urlencode }}">{{ p }}</a>
+    </div>
+  {% endfor %}
+</body>
+</html>
