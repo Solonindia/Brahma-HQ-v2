@@ -43,7 +43,7 @@ def health():
 
 # ---------- API (Protected) ----------
 @app.post("/upload_request")
-def upload_request(req: UploadRequest, token=Depends(security)):
+def upload_request(req: UploadRequest):
     validate_filetype(req.filename)
 
     object_path = build_object_path(req.mfr, req.filename)
@@ -63,7 +63,7 @@ def upload_request(req: UploadRequest, token=Depends(security)):
 
 
 @app.post("/upload_complete")
-def upload_complete(req: UploadComplete, token=Depends(security)):
+def upload_complete(req: UploadComplete):
     write_metadata_json(
         bucket_name=GCS_BUCKET,
         object_path=req.object_path,
