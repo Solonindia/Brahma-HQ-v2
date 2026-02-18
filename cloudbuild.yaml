@@ -8,7 +8,9 @@ steps:
       'build',
       '-t',
       'asia-south1-docker.pkg.dev/brahma-hq/brahma-repo/hq-uploader:$COMMIT_SHA',
-      '.'
+      '-f',
+      'brahma_hq_uploader/Dockerfile',
+      'brahma_hq_uploader'
     ]
 
 - name: 'gcr.io/cloud-builders/docker'
