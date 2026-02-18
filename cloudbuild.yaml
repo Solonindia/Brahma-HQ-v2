@@ -3,31 +3,33 @@ options:
 
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [
-    'build',
-    '-t', 'asia-south1-docker.pkg.dev/brahma-hq/brahma-repo/hq-uploader',
-    '.'
-  ]
+  args:
+    [
+      'build',
+      '-t',
+      'asia-south1-docker.pkg.dev/brahma-hq/brahma-repo/hq-uploader:$COMMIT_SHA',
+      '.'
+    ]
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: [
-    'push',
-    'asia-south1-docker.pkg.dev/brahma-hq/brahma-repo/hq-uploader'
-  ]
+  args:
+    [
+      'push',
+      'asia-south1-docker.pkg.dev/brahma-hq/brahma-repo/hq-uploader:$COMMIT_SHA'
+    ]
 
-
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      [
-        'run',
-        'deploy',
-        'brahma-hq-uploader',
-        '--image',
-        'asia-south1-docker.pkg.dev/$PROJECT_ID/brahma-repo/hq-uploader:$SHORT_SHA',
-        '--region',
-        'asia-south1',
-        '--platform',
-        'managed',
-        '--allow-unauthenticated'
-      ]
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    [
+      'run',
+      'deploy',
+      'brahma-hq-uploader',
+      '--image',
+      'asia-south1-docker.pkg.dev/brahma-hq/brahma-repo/hq-uploader:$COMMIT_SHA',
+      '--region',
+      'asia-south1',
+      '--platform',
+      'managed',
+      '--allow-unauthenticated'
+    ]
