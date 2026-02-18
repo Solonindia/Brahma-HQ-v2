@@ -1,3 +1,4 @@
 import os
 
-GCS_BUCKET = os.getenv("GCS_BUCKET")
+GCS_BUCKET = os.environ["GCS_BUCKET"]
+
