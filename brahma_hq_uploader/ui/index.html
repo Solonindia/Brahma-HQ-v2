@@ -65,11 +65,78 @@
   </div>
 
 <script>
-function log(msg) {
-  const el = document.getElementById("status");
-  el.textContent += "\\n" + msg;
-  el.scrollTop = el.scrollHeight;
+async function startUpload() {
+    try {
+        const fileInput = document.getElementById("file");
+        const mfr = document.getElementById("mfr").value;
+
+        if (!fileInput.files.length) {
+            alert("Please select a file");
+            return;
+        }
+
+        const file = fileInput.files[0];
+
+        // Step 1: Request signed URL
+        const uploadRequest = await fetch("/upload_request", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                mfr: mfr,
+                filename: file.name
+            })
+        });
+
+        if (!uploadRequest.ok) {
+            const errText = await uploadRequest.text();
+            alert("Upload request failed: " + errText);
+            return;
+        }
+
+        const uploadData = await uploadRequest.json();
+
+        // Step 2: Upload file to GCS
+        const gcsUpload = await fetch(uploadData.signed_url, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/pdf"
+            },
+            body: file
+        });
+
+        if (!gcsUpload.ok) {
+            alert("File upload failed");
+            return;
+        }
+
+        // Step 3: Notify upload complete
+        const complete = await fetch("/upload_complete", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                object_path: uploadData.object_path,
+                mfr: mfr,
+                filename: file.name
+            })
+        });
+
+        if (!complete.ok) {
+            alert("Metadata registration failed");
+            return;
+        }
+
+        alert("Upload successful!");
+    } catch (err) {
+        console.error(err);
+        alert("Error: " + err.message);
+    }
 }
+
+
 
 function apiUrl(path) {
   const base = document.getElementById("apiBase").value.trim();
