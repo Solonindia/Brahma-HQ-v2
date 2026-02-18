@@ -7,6 +7,8 @@ from app.config import GCS_BUCKET
 from app.models import UploadRequest, UploadComplete
 from app.utils import build_object_path, validate_filetype
 from app.gcs import write_metadata_json, generate_signed_put_url  # ✅ you must have this
+import os
+import uvicorn
 
 app = FastAPI(
     title="Brahma HQ Uploader",
@@ -73,3 +75,9 @@ def upload_complete(req: UploadComplete):
         "status": "registered",
         "metadata_path": req.object_path.replace(".pdf", "_metadata.json")
     }
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8080)),
+    )
