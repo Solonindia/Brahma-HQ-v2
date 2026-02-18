@@ -4,144 +4,133 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Brahma HQ - PDF Upload</title>
+
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; }
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-    label { display:block; margin: 10px 0 6px; font-weight: 600; }
-    input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
-    button { padding: 10px 14px; border: 0; border-radius: 10px; cursor: pointer; }
-    button.primary { background:#111; color:#fff; }
-    .row { display:flex; gap: 12px; }
-    .row > div { flex:1; }
-    .status { white-space: pre-wrap; background: #f7f7f7; padding: 12px; border-radius: 10px; }
-    .small { font-size: 12px; color:#555; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 6px;
+      font-weight: 600;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: #111;
+      color: #fff;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .row > div {
+      flex: 1;
+    }
+
+    .status {
+      white-space: pre-wrap;
+      background: #f7f7f7;
+      padding: 12px;
+      border-radius: 10px;
+      min-height: 120px;
+      font-family: monospace;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #555;
+    }
   </style>
 </head>
+
 <body>
-  <h2>Brahma HQ — Module Datasheet Upload</h2>
 
-  <div class="card">
-    <div class="row">
-      <div>
-        <label>API Base URL</label>
-        <input id="apiBase" value="" placeholder="Leave blank if same server. Example: https://your-uploader.run.app" />
-        <div class="small">If UI is served from uploader, keep blank.</div>
-      </div>
-      <div>
-        <label>Bearer Token (if enabled)</label>
-        <input id="token" placeholder="Optional: paste token here" />
-        <div class="small">If your uploader endpoints require Authorization: Bearer ...</div>
-      </div>
+<h2>Brahma HQ — Module Datasheet Upload</h2>
+
+<div class="card">
+
+  <div class="row">
+    <div>
+      <label>API Base URL</label>
+      <input id="apiBase" placeholder="Leave blank if same server" />
+      <div class="small">Example: https://your-uploader.run.app</div>
     </div>
 
-    <label>Manufacturer (required)</label>
-    <input id="mfr" placeholder="Example: JinkoSolar" />
-
-    <div class="row">
-      <div>
-        <label>Series</label>
-        <input id="series" placeholder="Example: Tiger Neo 72HL4-BDV" />
-      </div>
-      <div>
-        <label>Model</label>
-        <input id="model" placeholder="Example: JKM580N-72HL4-BDV" />
-      </div>
-    </div>
-
-    <label>Select PDF</label>
-    <input id="file" type="file" accept="application/pdf" />
-
-    <label>Notes (optional)</label>
-    <textarea id="notes" rows="3" placeholder="Any additional info..."></textarea>
-
-    <div style="margin-top:12px;">
-      <button class="primary" onclick="startUpload()">Upload PDF</button>
+    <div>
+      <label>Bearer Token (optional)</label>
+      <input id="token" placeholder="Paste token if required" />
     </div>
   </div>
 
-  <div class="card">
-    <h3>Status</h3>
-    <div id="status" class="status">Ready.</div>
+  <label>Manufacturer (required)</label>
+  <input id="mfr" placeholder="Example: JinkoSolar" />
+
+  <div class="row">
+    <div>
+      <label>Series</label>
+      <input id="series" placeholder="Example: Tiger Neo 72HL4-BDV" />
+    </div>
+    <div>
+      <label>Model</label>
+      <input id="model" placeholder="Example: JKM580N-72HL4-BDV" />
+    </div>
   </div>
+
+  <label>Select PDF</label>
+  <input id="file" type="file" accept="application/pdf" />
+
+  <label>Notes (optional)</label>
+  <textarea id="notes" rows="3"></textarea>
+
+  <div style="margin-top:15px;">
+    <button class="primary" onclick="startUpload()">Upload PDF</button>
+  </div>
+
+</div>
+
+<div class="card">
+  <h3>Status</h3>
+  <div id="status" class="status">Ready.</div>
+</div>
 
 <script>
-async function startUpload() {
-    try {
-        const fileInput = document.getElementById("file");
-        const mfr = document.getElementById("mfr").value;
 
-        if (!fileInput.files.length) {
-            alert("Please select a file");
-            return;
-        }
-
-        const file = fileInput.files[0];
-
-        // Step 1: Request signed URL
-        const uploadRequest = await fetch("/upload_request", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                mfr: mfr,
-                filename: file.name
-            })
-        });
-
-        if (!uploadRequest.ok) {
-            const errText = await uploadRequest.text();
-            alert("Upload request failed: " + errText);
-            return;
-        }
-
-        const uploadData = await uploadRequest.json();
-
-        // Step 2: Upload file to GCS
-        const gcsUpload = await fetch(uploadData.signed_url, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/pdf"
-            },
-            body: file
-        });
-
-        if (!gcsUpload.ok) {
-            alert("File upload failed");
-            return;
-        }
-
-        // Step 3: Notify upload complete
-        const complete = await fetch("/upload_complete", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                object_path: uploadData.object_path,
-                mfr: mfr,
-                filename: file.name
-            })
-        });
-
-        if (!complete.ok) {
-            alert("Metadata registration failed");
-            return;
-        }
-
-        alert("Upload successful!");
-    } catch (err) {
-        console.error(err);
-        alert("Error: " + err.message);
-    }
+function log(msg) {
+  const box = document.getElementById("status");
+  box.textContent += "\n" + msg;
 }
-
-
 
 function apiUrl(path) {
   const base = document.getElementById("apiBase").value.trim();
   if (!base) return path;
-  return base.replace(/\\/$/ "") + path;
+  return base.replace(/\/$/, "") + path;
 }
 
 function authHeaders() {
@@ -151,86 +140,118 @@ function authHeaders() {
 }
 
 async function startUpload() {
-  const fileInput = document.getElementById("file");
-  const f = fileInput.files[0];
-  document.getElementById("status").textContent = "Starting...";
+  try {
 
-  if (!f) { log("❌ Please select a PDF."); return; }
-  if (!f.name.toLowerCase().endsWith(".pdf")) { log("❌ Only PDF allowed."); return; }
+    const statusBox = document.getElementById("status");
+    statusBox.textContent = "Starting upload...";
 
-  const mfr = document.getElementById("mfr").value.trim();
-  if (!mfr) { log("❌ Manufacturer is required."); return; }
+    const fileInput = document.getElementById("file");
+    const file = fileInput.files[0];
 
-  const series = document.getElementById("series").value.trim();
-  const model = document.getElementById("model").value.trim();
-  const notes = document.getElementById("notes").value.trim();
+    if (!file) {
+      log("❌ Please select a PDF.");
+      return;
+    }
 
-  // 1) upload_request
-  log("1) Requesting signed URL...");
-  const reqBody = {
-    manufacturer: mfr,
-    series: series || null,
-    model: model || null,
-    filename: f.name,
-    notes: notes || null
-  };
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      log("❌ Only PDF files allowed.");
+      return;
+    }
 
-  const r1 = await fetch(apiUrl("/upload_request"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(reqBody)
-  });
+    const mfr = document.getElementById("mfr").value.trim();
+    if (!mfr) {
+      log("❌ Manufacturer is required.");
+      return;
+    }
 
-  if (!r1.ok) {
-    const t = await r1.text();
-    log("❌ upload_request failed: " + r1.status + " " + t);
-    return;
+    const series = document.getElementById("series").value.trim();
+    const model = document.getElementById("model").value.trim();
+    const notes = document.getElementById("notes").value.trim();
+
+    // STEP 1: Get signed URL
+    log("1️⃣ Requesting signed URL...");
+
+    const r1 = await fetch(apiUrl("/upload_request"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders()
+      },
+      body: JSON.stringify({
+        mfr: mfr,
+        filename: file.name,
+        series: series || null,
+        model: model || null,
+        notes: notes || null
+      })
+    });
+
+    if (!r1.ok) {
+      const err = await r1.text();
+      log("❌ upload_request failed: " + r1.status);
+      log(err);
+      return;
+    }
+
+    const { signed_url, object_path } = await r1.json();
+    log("✅ Signed URL received.");
+
+    // STEP 2: Upload to GCS
+    log("2️⃣ Uploading PDF to storage...");
+
+    const r2 = await fetch(signed_url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/pdf" },
+      body: file
+    });
+
+    if (!r2.ok) {
+      const err = await r2.text();
+      log("❌ File upload failed: " + r2.status);
+      log(err);
+      return;
+    }
+
+    log("✅ PDF uploaded successfully.");
+
+    // STEP 3: Notify backend
+    log("3️⃣ Finalizing metadata...");
+
+    const r3 = await fetch(apiUrl("/upload_complete"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders()
+      },
+      body: JSON.stringify({
+        object_path: object_path,
+        mfr: mfr,
+        filename: file.name,
+        series: series || null,
+        model: model || null,
+        notes: notes || null
+      })
+    });
+
+    if (!r3.ok) {
+      const err = await r3.text();
+      log("❌ upload_complete failed: " + r3.status);
+      log(err);
+      return;
+    }
+
+    const result = await r3.json();
+
+    log("🎉 Upload Complete!");
+    log(JSON.stringify(result, null, 2));
+
+  } catch (err) {
+    console.error(err);
+    log("❌ Unexpected error: " + err.message);
   }
-
-  const { signed_url, object_path } = await r1.json();
-  log("✅ Got signed URL.");
-  log("   object_path: " + object_path);
-
-  // 2) PUT upload to signed_url
-  log("2) Uploading PDF to GCS...");
-  const r2 = await fetch(signed_url, {
-    method: "PUT",
-    headers: { "Content-Type": "application/pdf" },
-    body: f
-  });
-
-  if (!r2.ok) {
-    const t = await r2.text();
-    log("❌ PUT upload failed: " + r2.status + " " + t);
-    return;
-  }
-  log("✅ PDF uploaded.");
-
-  // 3) upload_complete (writes metadata json)
-  log("3) Finalizing (writing metadata.json)...");
-  const r3 = await fetch(apiUrl("/upload_complete"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({
-      object_path,
-      manufacturer: mfr,
-      series: series || null,
-      model: model || null,
-      filename: f.name,
-      notes: notes || null
-    })
-  });
-
-  if (!r3.ok) {
-    const t = await r3.text();
-    log("❌ upload_complete failed: " + r3.status + " " + t);
-    return;
-  }
-
-  const out = await r3.json();
-  log("✅ Done!");
-  log("Metadata: " + JSON.stringify(out, null, 2));
 }
+
 </script>
+
 </body>
 </html>
