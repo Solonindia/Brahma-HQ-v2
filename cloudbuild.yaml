@@ -2,21 +2,19 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      [
-        'build',
-        '-t',
-        'asia-south1-docker.pkg.dev/$PROJECT_ID/brahma-repo/hq-uploader:$SHORT_SHA',
-        'brahma_hq_uploader'
-      ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '-t', 'asia-south1-docker.pkg.dev/brahma-hq/brahma-repo/hq-uploader',
+    '.'
+  ]
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      [
-        'push',
-        'asia-south1-docker.pkg.dev/$PROJECT_ID/brahma-repo/hq-uploader:$SHORT_SHA'
-      ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'push',
+    'asia-south1-docker.pkg.dev/brahma-hq/brahma-repo/hq-uploader'
+  ]
+
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
