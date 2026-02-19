@@ -3,10 +3,11 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer
 from pathlib import Path
 
-from app.config import GCS_BUCKET
-from app.models import UploadRequest, UploadComplete
-from app.utils import build_object_path, validate_filetype
-from app.gcs import write_metadata_json, generate_signed_put_url  # ✅ you must have this
+from .config import GCS_BUCKET
+from .models import UploadRequest, UploadComplete
+from .utils import build_object_path, validate_filetype
+from .gcs import write_metadata_json, generate_signed_put_url
+
 import os
 import uvicorn
 
@@ -76,8 +77,10 @@ def upload_complete(req: UploadComplete):
         "metadata_path": req.object_path.replace(".pdf", "_metadata.json")
     }
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(
-        "main:app",
+        "app.main:app",
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 8080)),
+        port=8080,
+        reload=True,
     )
