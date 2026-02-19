@@ -1,30 +1,18 @@
-import json
 from google.cloud import storage
+from datetime import timedelta
 
-
-def generate_signed_put_url(bucket_name: str, object_path: str, content_type: str):
+def generate_signed_put_url(bucket_name, object_name, content_type):
     client = storage.Client()
-
     bucket = client.bucket(bucket_name)
-    blob = bucket.blob(object_path)
+    blob = bucket.blob(object_name)
 
     url = blob.generate_signed_url(
         version="v4",
-        expiration=3600,
+        expiration=timedelta(minutes=15),
         method="PUT",
         content_type=content_type,
+        service_account_email=client._credentials.service_account_email,
+        access_token=client._credentials.token,
     )
 
     return url
-
-
-def write_metadata_json(bucket_name: str, object_path: str, metadata: dict):
-    client = storage.Client()
-
-    meta_path = object_path.replace(".pdf", "_metadata.json")
-
-    blob = client.bucket(bucket_name).blob(meta_path)
-    blob.upload_from_string(
-        json.dumps(metadata, indent=2),
-        content_type="application/json"
-    )

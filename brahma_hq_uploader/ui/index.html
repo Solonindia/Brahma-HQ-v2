@@ -179,7 +179,7 @@ async function startUpload() {
       },
       body: JSON.stringify({
         mfr: mfr,
-        filename: file.name,
+        file_name: file.name,
         series: series || null,
         model: model || null,
         notes: notes || null
@@ -200,10 +200,10 @@ async function startUpload() {
     log("2️⃣ Uploading PDF to storage...");
 
     const r2 = await fetch(signed_url, {
-      method: "PUT",
-      headers: { "Content-Type": "application/pdf" },
-      body: file
-    });
+  method: "PUT",
+  headers: { "Content-Type": file.type },
+  body: file
+});
 
     if (!r2.ok) {
       const err = await r2.text();

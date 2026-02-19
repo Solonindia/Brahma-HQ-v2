@@ -1,18 +1,19 @@
 from pydantic import BaseModel
+from typing import Optional
+
 
 class UploadRequest(BaseModel):
     mfr: str
-    model: str
     filename: str
-    almm_compliant: bool | None = False
-    technology: str | None = None
-    notes: str | None = None
+    series: Optional[str] = None
+    model: Optional[str] = None
+    notes: Optional[str] = None
+
 
 class UploadComplete(BaseModel):
     object_path: str
     mfr: str
-    model: str
-    almm_compliant: bool | None = False
-    technology: str | None = None
-    notes: str | None = None
-
+    filename: str
+    series: Optional[str] = None
+    model: Optional[str] = None
+    notes: Optional[str] = None
