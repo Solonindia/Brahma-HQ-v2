@@ -31,6 +31,7 @@
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
+      box-sizing: border-box;
     }
 
     button {
@@ -43,6 +44,11 @@
     button.primary {
       background: #111;
       color: #fff;
+    }
+
+    button.primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .row {
@@ -59,8 +65,10 @@
       background: #f7f7f7;
       padding: 12px;
       border-radius: 10px;
-      min-height: 120px;
+      min-height: 140px;
       font-family: monospace;
+      font-size: 13px;
+      line-height: 1.4;
     }
 
     .small {
@@ -110,7 +118,7 @@
   <textarea id="notes" rows="3"></textarea>
 
   <div style="margin-top:15px;">
-    <button class="primary" onclick="startUpload()">Upload PDF</button>
+    <button id="uploadBtn" class="primary" onclick="startUpload()">Upload PDF</button>
   </div>
 
 </div>
@@ -121,10 +129,20 @@
 </div>
 
 <script>
+function setBusy(isBusy) {
+  const btn = document.getElementById("uploadBtn");
+  btn.disabled = isBusy;
+  btn.textContent = isBusy ? "Uploading..." : "Upload PDF";
+}
 
 function log(msg) {
   const box = document.getElementById("status");
   box.textContent += "\n" + msg;
+}
+
+function resetStatus() {
+  const box = document.getElementById("status");
+  box.textContent = "Starting upload...";
 }
 
 function apiUrl(path) {
@@ -139,11 +157,24 @@ function authHeaders() {
   return { "Authorization": "Bearer " + t };
 }
 
-async function startUpload() {
+async function readErrorText(resp) {
+  // Try JSON first, fallback to text
   try {
+    const j = await resp.json();
+    return JSON.stringify(j, null, 2);
+  } catch (_) {
+    try {
+      return await resp.text();
+    } catch (__) {
+      return "(no response body)";
+    }
+  }
+}
 
-    const statusBox = document.getElementById("status");
-    statusBox.textContent = "Starting upload...";
+async function startUpload() {
+  setBusy(true);
+  try {
+    resetStatus();
 
     const fileInput = document.getElementById("file");
     const file = fileInput.files[0];
@@ -179,7 +210,7 @@ async function startUpload() {
       },
       body: JSON.stringify({
         mfr: mfr,
-        file_name: file.name,
+        filename: file.name,           // ✅ FIXED (was file_name)
         series: series || null,
         model: model || null,
         notes: notes || null
@@ -187,28 +218,36 @@ async function startUpload() {
     });
 
     if (!r1.ok) {
-      const err = await r1.text();
       log("❌ upload_request failed: " + r1.status);
-      log(err);
+      log(await readErrorText(r1));
       return;
     }
 
-    const { signed_url, object_path } = await r1.json();
+    const r1json = await r1.json();
+    const signed_url = r1json.signed_url;
+    const object_path = r1json.object_path;
+
+    if (!signed_url || !object_path) {
+      log("❌ Backend did not return signed_url/object_path.");
+      log(JSON.stringify(r1json, null, 2));
+      return;
+    }
+
     log("✅ Signed URL received.");
+    log("   object_path = " + object_path);
 
     // STEP 2: Upload to GCS
     log("2️⃣ Uploading PDF to storage...");
 
     const r2 = await fetch(signed_url, {
-  method: "PUT",
-  headers: { "Content-Type": file.type },
-  body: file
-});
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/pdf" },
+      body: file
+    });
 
     if (!r2.ok) {
-      const err = await r2.text();
       log("❌ File upload failed: " + r2.status);
-      log(err);
+      log(await readErrorText(r2));
       return;
     }
 
@@ -234,23 +273,22 @@ async function startUpload() {
     });
 
     if (!r3.ok) {
-      const err = await r3.text();
       log("❌ upload_complete failed: " + r3.status);
-      log(err);
+      log(await readErrorText(r3));
       return;
     }
 
     const result = await r3.json();
-
     log("🎉 Upload Complete!");
     log(JSON.stringify(result, null, 2));
 
   } catch (err) {
     console.error(err);
-    log("❌ Unexpected error: " + err.message);
+    log("❌ Unexpected error: " + (err?.message || err));
+  } finally {
+    setBusy(false);
   }
 }
-
 </script>
 
 </body>
